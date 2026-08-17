@@ -17,7 +17,7 @@ def get_isogeny(K: LaurentSeriesRing, A: int, B: int, c: int, alfa: LaurentSerie
         else:
             print("\n", "precision not changed as the bound is", bound_period_psi)
 
-        len_period_psi, _ = find_period_extended(psi, precision)
+        _,_,len_period_psi, _ = find_period_extended(psi, precision)
         print(len_period_psi, "\n")
 
         l=test_compatibility(psi, k)
@@ -26,7 +26,7 @@ def get_isogeny(K: LaurentSeriesRing, A: int, B: int, c: int, alfa: LaurentSerie
             gamma = get_gamma(A, precision, psi)
     
     
-            len_period, _ = find_period_extended(gamma, precision)
+            _,_,len_period, _ = find_period_extended(gamma, precision)
     
             if len_period >= 0:
                 print("\n", "For the above gamma we got that it is periodic, with period =", len_period, "and we can write it in rational form.")
@@ -302,22 +302,22 @@ def find_period_extended(f, precision) -> (int, list):
     if n is None or n == 0:
         return 0, []
 
+
     list_coeff = [f[i] for i in range(n)]
     
     for period_len in range(n // 2, 0, -1):
         for start_idx in range(n - 2 * period_len + 1):
-            period = list_coeff[start_idx : start_idx + period_len]
-            
             remaining_len = n - start_idx
             repeat_count = remaining_len // period_len
             
             if repeat_count < 2:
                 continue
                 
-            expected_sequence = period * repeat_count
-            actual_subsequence = list_coeff[start_idx : start_idx + period_len * repeat_count]
+            end_idx = start_idx + period_len * repeat_count
             
-            if expected_sequence == actual_subsequence:
+            if list_coeff[start_idx : end_idx - period_len] == list_coeff[start_idx + period_len : end_idx]:
+                period = list_coeff[start_idx : start_idx + period_len]
+                
                 for sub_len in range(1, period_len // 2 + 1):
                     if period_len % sub_len == 0:
                         sub_period = period[:sub_len]
@@ -325,9 +325,9 @@ def find_period_extended(f, precision) -> (int, list):
                             period_len = sub_len
                             period = sub_period
                 
-                return period_len, period
-
-    return -1, []
+                return list_coeff[:start_idx], period, period_len,(start_idx, end_idx - 1)
+                
+    return None
 
 
 def find_bound(f):
@@ -555,7 +555,7 @@ if __name__ == "__main__":
         else:
             print("\n", "precision not changed as the bound is", bound_period_psi)
 
-        len_period_psi, _ = find_period_extended(psi, precision)
+        _,_,len_period_psi, _ = find_period_extended(psi, precision)
     
         l=test_compatibility(psi, k)
         print("\n", "There are", len(l), "compatible constant terms and hence at most", len(l), "rational isogenies." "\n")
@@ -563,7 +563,7 @@ if __name__ == "__main__":
             gamma = get_gamma(A, precision, psi)
     
     
-            len_period, _ = find_period_extended(gamma, precision)
+            _,_,len_period, _ = find_period_extended(gamma, precision)
     
             if len_period >= 0:
                 print("\n", "For the above gamma we got that it is periodic, and we can write it in rational form.")
